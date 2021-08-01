@@ -1,0 +1,212 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block title %}
+    Добро пожаловать в СКУД ГБПОУ МО Электростальский колледж
+{% endblock %}
+
+{% block navbar %}
+    <nav class="navbar navbar-default" id="base_menu">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">СКУД</a>
+            </div>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                {% if current_user.is_authenticated %}
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('main.menu_events') }}">События</a></li>
+                    <li><a href="{{ url_for('main.menu_passes') }}">Пропуска</a></li>
+                    <li><a href="{{ url_for('main.menu_users') }}">Пользователи</a></li>
+                </ul>
+                {% endif %}
+                <ul class="nav navbar-nav navbar-right">
+                    {% if current_user.is_anonymous %}
+                    <li><a href="{{ url_for('auth.login') }}">Авторизоваться</a></li>
+                    {% else %}
+                    <li>
+                        <a href="{{ url_for('main.messages') }}">Сообщения
+                            {% set new_messages = current_user.new_messages() %}
+                            <span id="message_count" class="badge"
+                                  style="visibility: {% if new_messages %}visible
+                                                     {% else %}hidden{% endif %};">
+                                {{ new_messages }}
+                            </span>
+                        </a>
+                    </li>
+                    <li><a href="{{ url_for('main.user', username=current_user.username) }}">Профиль</a></li>
+                    <li><a href="{{ url_for('auth.logout') }}">Выйти из системы</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        {% if current_user.is_authenticated %}
+        {% with tasks = current_user.get_tasks_in_progress() %}
+        {% if tasks %}
+            {% for task in tasks %}
+            <div class="alert alert-success" role="alert">
+                {{ task.description }}
+                <span id="{{ task.id }}-progress">{{ task.get_progress() }}</span>%
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% endif %}
+        
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-info" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {# application content needs to be provided in the app_content block #}
+        
+        {% if current_user.is_authenticated %}
+        <div class="row content">
+            <div class="col-sm-7 text-left" id="content_items">
+                <div id="nav_list_button">
+                </div>
+                <table class="table table-striped">
+                {% block app_items %}{% endblock %}
+                </table>
+                <nav aria-label="...">
+                    <ul class="pager" id="nav_button" id="nav_button">
+                        <li class="previous" onclick="prev_page()">
+                            <a href="#">
+                                <span aria-hidden="true">&larr;</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <span aria-hidden="true" id="cur_page"></span>
+                        </li>
+                        <li class="next" onclick="next_page()">
+                            <a href="#">
+                                <span aria-hidden="true">&rarr;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="col-sm-5 text-left" id="content_meta">
+                <div id="nav_button_item">
+                </div>
+                {% block app_meta %}{% endblock %}
+            </div>
+        </div>
+        {% else %}
+        {% block app_content %}{% endblock %}
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+    
+    <script>
+        var total_pages = 1
+        var cur_page = 1;
+        htable = document.documentElement.clientHeight
+         - document.getElementById('base_menu').clientHeight*2;
+        // - document.getElementById('nav_fun_base_button').clientHeight;
+        //document.documentElement.clientHeight||document.body.clientHeight window.innerHeight|| 
+        var hitem = 45;//document.getElementById('content_items').clientHeight;
+        var cnt = Math.floor(htable/hitem)-1;
+        $(function () {
+            var timer = null;
+            var xhr = null;
+            $('.user_popup').hover(
+                function(event) {
+                    var elem = $(event.currentTarget);
+                    timer = setTimeout(function() {
+                        timer = null;
+                        xhr = $.ajax(
+                            '/user/' + elem.first().text().trim() + '/popup').done(
+                                function(data) {
+                                    xhr = null;
+                                    elem.popover({
+                                        trigger: 'manual',
+                                        html: true,
+                                        animation: false,
+                                        container: elem,
+                                        content: data
+                                    }).popover('show');
+                                    flask_moment_render_all();
+                                }
+                            );
+                    }, 1000);
+                },
+                function(event) {
+                    var elem = $(event.currentTarget);
+                    if (timer) {
+                        clearTimeout(timer);
+                        timer = null;
+                    }
+                    else if (xhr) {
+                        xhr.abort();
+                        xhr = null;
+                    }
+                    else {
+                        elem.popover('destroy');
+                    }
+                }
+            );
+        });
+        
+        function next_page() {
+            if (cur_page < total_pages) {
+                cur_page += 1;
+                update_list();
+            }
+        }
+        
+        function prev_page() {
+            if (cur_page > 1) {
+                cur_page -= 1;
+                update_list();
+            }
+        }
+        
+        function set_message_count(n) {
+            $('#message_count').text(n);
+            $('#message_count').css('visibility', n ? 'visible' : 'hidden');
+        }
+        function set_task_progress(task_id, progress) {
+            $('#' + task_id + '-progress').text(progress);
+        }
+        {% if current_user.is_authenticated %}
+        $(function() {
+            var since = 0;
+            setInterval(function() {
+                $.ajax('{{ url_for('main.notifications') }}?since=' + since).done(
+                    function(notifications) {
+                        for (var i = 0; i < notifications.length; i++) {
+                            switch (notifications[i].name) {
+                                case 'unread_message_count':
+                                    set_message_count(notifications[i].data);
+                                    break;
+                                case 'task_progress':
+                                    set_task_progress(notifications[i].data.task_id,
+                                        notifications[i].data.progress);
+                                    break;
+                            }
+                            since = notifications[i].timestamp;
+                        }
+                    }
+                );
+            }, 10000);
+        });
+        {% endif %}
+    </script>
+{% endblock %}

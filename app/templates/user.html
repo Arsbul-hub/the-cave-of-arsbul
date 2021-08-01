@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block app_content_3 %}
+    <table class="table table-hover">
+        <tr>
+            <td width="256px"><img src="{{ user.avatar(256) }}"></td>
+            <td>
+                <h1>Пользователь: {{ user.username }}</h1>
+                {% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
+                {% if user.last_seen %}
+                <p>Последний раз был онлайн: {{ user.last_seen }}</p>
+                {% endif %}
+                {% if user == current_user %}
+                <p><a href="{{ url_for('main.edit_profile') }}">Редактировать профиль</a></p>
+                <p><a href="{{ url_for('auth.register') }}">Создать нового пользователя</a></p>
+                {% endif %}
+                {% if user != current_user %}
+                <p><a href="{{ url_for('main.send_message', recipient=user.username) }}">Отправить сообщение</a></p>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+{% endblock %}

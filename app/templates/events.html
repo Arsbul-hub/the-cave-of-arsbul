@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+
+{% block app_items %}
+    <thead id="header_table">
+      <tr>
+        <th>ID</th>
+        <th>Время</th>
+        <th>Устройство</th>
+        <th>Событие</th>
+        <th>Данные</th>
+      </tr>
+    </thead>
+    <tbody id="list_items">
+    </tbody>
+    
+{% endblock %}
+
+    
+
+{% block app_meta %}
+<form class="form-horizontal" id="id_item_meta">
+</form>
+{% endblock %}
+
+
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+    
+    <script>
+        
+        $(function () {
+            document.getElementById('id_item_meta')
+                        .innerHTML=cnt;
+            update_list();
+            
+        })
+        
+        function update_list() {
+            $.ajax
+            ({
+                type: "POST",
+                url: '/event/get',
+                dataType: 'json',
+                async: false,
+                data: JSON.stringify({
+                    "page": cur_page,
+                    "per_page": cnt
+                }),
+                contentType: 'application/json',
+                success: function(data) {
+                    var cntnt = "";
+                    
+                    for(let i = 0; i < data['_meta']['items_on_page']; i++) {
+                        cntnt += "<tr onclick = \"item_meta(";
+                        cntnt += data['items'][i]['id'] + ")\"><td>";
+                        cntnt += data['items'][i]['id'] + "</td><td>";
+                        cntnt += data['items'][i]['timestamp'] + "</td><td>";
+                        cntnt += data['items'][i]['device_mac'] + "</td><td>";
+                        cntnt += convert_event_type_to_string(data['items'][i]['event']) + "</td><td>";
+                        cntnt += data['items'][i]['data'] + "</td></tr>";
+                    }
+                    document.getElementById("list_items")
+                        .innerHTML=cntnt;
+                    total_pages = data['_meta']['total_pages'];
+                    cntnt = cur_page + " из " + total_pages
+                    document.getElementById("cur_page")
+                        .innerHTML=cntnt;
+                },
+                failure: function(errMsg) {
+                    document.getElementById('id_item_meta')
+                        .innerHTML="fuck";
+                }
+            })
+        }
+        
+        function convert_event_type_to_string(event_type) {
+            var str = "";
+            switch(event_type) {
+                case 1:
+                    str = "Соединение установлено";
+                    break;
+                case 3:
+                    str = "Проверка связи";
+                    break;
+                case 10:
+                    str = "Вход по пропуску";
+                    break;
+                case 11:
+                    str = "Выход по пропуску";
+                    break;
+                default:
+                    str += event_type;
+            }
+            return str;
+        }
+        
+        function item_meta(id) {
+            $.ajax
+            ({
+                type: "POST",
+                url: '/event/get',
+                dataType: 'json',
+                async: false,
+                data: JSON.stringify({
+                    "id": id
+                }),
+                contentType: 'application/json',
+                success: function(data) {
+                    cntnt = "";
+                    
+                    for(var key in data.read) {
+                        cntnt = cntnt + 
+    "<div class=\"form-group\"><label class=\"control-label col-sm-2\">";
+                        cntnt = cntnt + key;
+                        cntnt = cntnt + ":</label>";
+                        cntnt = cntnt + 
+    "<div class=\"col-sm-10\"><p class=\"form-control-static\">";
+                        cntnt = cntnt + data.read[key] + "</p></div></div>";
+                    }
+                    for(var key in data.edit) {
+                        cntnt = cntnt + 
+    "<div class=\"form-group\"><label class=\"col-sm-2 control-label\">";
+                        cntnt = cntnt + key;
+                        cntnt = cntnt + ":</label>";
+                        cntnt = cntnt + 
+    "<div class=\"col-sm-10\"><input class=\"form-control\" id=\"focusedInput\" type=\"text\" value=\"";
+                        cntnt = cntnt + data.edit[key] + "\"></div></div>";
+                    }
+                    document.getElementById("id_item_meta")
+                        .innerHTML=cntnt;
+                        
+        //<input class=\"form-control\" id=\"focusedInput\" type=\"text\" value="+ data.id+">"+data.event+"<br>"+data.timestamp;
+                },
+                failure: function(errMsg) {
+                    document.getElementById('id_item_meta')
+                        .innerHTML="fuck" + id;
+                }
+            })
+        }
+        function set_message_count(n) {
+            $('#message_count').text(n);
+            $('#message_count').css('visibility', n ? 'visible' : 'hidden');
+        }
+        function set_task_progress(task_id, progress) {
+            $('#' + task_id + '-progress').text(progress);
+        }
+        $(function () {
+            var timer = null;
+            var xhr = null;
+            $('.user_popup').hover(
+                function(event) {
+                    // mouse in event handler
+                    var elem = $(event.currentTarget);
+                    timer = setTimeout(function() {
+                        timer = null;
+                        xhr = $.ajax(
+                            '/user/' + elem.first().text().trim() + '/popup').done(
+                                function(data) {
+                                    xhr = null;
+                                    elem.popover({
+                                        trigger: 'manual',
+                                        html: true,
+                                        animation: false,
+                                        container: elem,
+                                        content: data
+                                    }).popover('show');
+                                    flask_moment_render_all();
+                                }
+                            );
+                    }, 1000);
+                },
+                function(event) {
+                    // mouse out event handler
+                    var elem = $(event.currentTarget);
+                    if (timer) {
+                        clearTimeout(timer);
+                        timer = null;
+                    }
+                    else if (xhr) {
+                        xhr.abort();
+                        xhr = null;
+                    }
+                    else {
+                        elem.popover('destroy');
+                    }
+                }
+            );
+        });
+        {% if current_user.is_authenticated %}
+        {% endif %}
+    </script>
+{% endblock %}

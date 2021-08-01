@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+
+
+{% block app_items %}
+    <thead id="header_table">
+      <tr>
+        <th>ID</th>
+        <th>Владелец пропуска</th>
+        <th>Группа</th>
+      </tr>
+    </thead>
+    <tbody id="list_items">
+    </tbody>
+{% endblock %}
+
+    
+
+{% block app_meta %}
+<form class="form-horizontal" id="id_item_meta">
+</form>
+{% endblock %}
+
+
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+    
+    <script>
+        var pass;
+        $(function () {
+            //document.getElementById('id_item_meta').innerHTML=cnt;
+                        
+            document.getElementById('nav_list_button')
+                        .innerHTML="<button type=\"button\" class=\"btn btn-default\" onclick=\"update_list()\">Обновить</button>";
+            document.getElementById('nav_list_button')
+                        .innerHTML+="<button type=\"button\" class=\"btn btn-default\" onclick=\"uploadCSV()\">Загрузить CSV список</button>";
+                         
+            update_list();
+        });
+        
+        function uploadCSV() {
+            document.getElementById("id_item_meta")
+                .innerHTML="<form action=\"/passes/uploudCSV\" method=\"post\" enctype=\"multipart/form-data\"><input type=\"file\" name=\"data_file\" /><input type=\"submit\" /></form>";
+                       
+        }
+        
+        function update_list() {
+            $.ajax
+            ({
+                type: "POST",
+                url: '/passes',
+                dataType: 'json',
+                async: false,
+                data: JSON.stringify({
+                    "page": cur_page,
+                    "per_page": cnt
+                }),
+                contentType: 'application/json',
+                success: function(data) {
+                    let cntnt = "";
+                    
+                    for(let i = 0; i < data['_meta']['items_on_page']; i++) {
+                        cntnt += "<tr onclick = \"getMetaItem(";
+                        cntnt += data['items'][i]['id'] + ")\"";
+                        cntnt += " id=\"item" + data['items'][i]['id'] + "\"><td>";
+                        cntnt += data['items'][i]['id'] + "</td><td>";
+                        cntnt += data['items'][i]['pass_holder'] + "</td><td>";
+                        cntnt += data['items'][i]['group_id'] + "</td>";
+                    }
+                    document.getElementById("list_items")
+                        .innerHTML=cntnt;
+                    total_pages = data['_meta']['total_pages'];
+                    cntnt = cur_page + " из " + total_pages
+                    document.getElementById("cur_page")
+                        .innerHTML=cntnt;
+                },
+                failure: function(errMsg) {
+                    document.getElementById('id_item_meta')
+                        .innerHTML="fuck";
+                }
+            });
+        }
+        
+        $(function () {
+            var timer = null;
+            var xhr = null;
+            $('.user_popup').hover(
+                function(event) {
+                    // mouse in event handler
+                    let elem = $(event.currentTarget);
+                    timer = setTimeout(function() {
+                        timer = null;
+                        xhr = $.ajax(
+                            '/user/' + elem.first().text().trim() + '/popup').done(
+                                function(data) {
+                                    xhr = null;
+                                    elem.popover({
+                                        trigger: 'manual',
+                                        html: true,
+                                        animation: false,
+                                        container: elem,
+                                        content: data
+                                    }).popover('show');
+                                    flask_moment_render_all();
+                                }
+                            );
+                    }, 1000);
+                },
+                function(event) {
+                    // mouse out event handler
+                    var elem = $(event.currentTarget);
+                    if (timer) {
+                        clearTimeout(timer);
+                        timer = null;
+                    }
+                    else if (xhr) {
+                        xhr.abort();
+                        xhr = null;
+                    }
+                    else {
+                        elem.popover('destroy');
+                    }
+                }
+            );
+        });
+       
+        function editItem(id) {
+            constructEditNavButtonItem(id);
+            editAtrItem(pass);
+        }
+        
+        function abortChangeItem(id) {
+            constructDefaultNavButtonItem(id);
+            showAtrItem(pass);
+        }
+        
+        function saveChangeItem(id) {
+            sendMetaItem(id);
+        }
+        
+        function removeItem(id) {
+            constructDeleteNavButtonItem(id);
+        }
+        
+        function abortRemoveItem(id) {
+            constructDefaultNavButtonItem(id);
+        }
+        
+        function successRemoveItem(id) {
+            finishedRemoveItem(id);
+            
+        }
+            
+        function getMetaItem(id) {
+            downloadMetaItem(id);
+        }
+        
+        function downloadMetaItem(id) {
+            $.ajax
+            ({
+                type: "POST",
+                url: '/pass_by_id/'+id,
+                dataType: 'json',
+                async: false,
+                success: function(data) {
+                    pass = data;
+                    showAtrItem(data);
+                    constructDefaultNavButtonItem(id);
+
+                },
+                failure: function(errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+        
+        function finishedRemoveItem(id) {
+            $.ajax
+            ({
+                type: "POST",
+                url: '/pass/delete/'+id,
+                dataType: 'json',
+                async: false,
+                success: function(data) {
+                    pass = {};
+                    document.getElementById('id_item_meta')
+                        .innerHTML = "";
+                    document.getElementById('nav_button_item')
+                        .innerHTML = "";
+                    let el = document.getElementById('item'+id);
+                    el.parentNode.removeChild(el);
+                },
+                failure: function(errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+        
+        function sendMetaItem(id) {
+            let tmp = {};
+            console.log(pass);
+            for(var key in pass) {
+                tmp[key] = document.getElementById("meta_" + key + "_item").value;
+            };
+            tmp["id"] = document.getElementById("meta_id_item").innerHTML;
+            $.ajax
+            ({
+                type: "POST",
+                url: '/pass/change',
+                dataType:'json',
+                async: false,
+                data: JSON.stringify({
+                    "id": parseInt(tmp["id"]),
+                    "pass_code": tmp["pass_code"],
+                    "group_id": tmp["group_id"],
+                    "pass_holder": tmp["pass_holder"]
+                }),
+                contentType: 'application/json',
+                success: function(data) {
+                    pass = data;
+                    showAtrItem(data);
+                    constructDefaultNavButtonItem(data["id"]);
+                    
+                    let cntnt = "";
+                    cntnt += "<td>" + data['id'] + "</td><td>";
+                    cntnt += data['pass_holder'] + "</td><td>";
+                    cntnt += data['group_id'] + "</td>";
+                    
+                    document.getElementById('item'+id)
+                        .innerHTML=cntnt;
+                },
+                failure: function(errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+        
+        function showAtrItem(data) {
+            let cntnt = "";
+            for(var key in data) {
+                cntnt += "<div class=\"form-group\">";
+                cntnt += "<label class=\"control-label col-sm-4\">";
+                cntnt += key;
+                cntnt += ":</label>";
+                cntnt += "<p class=\"form-control-static col-sm-8\">";
+                cntnt += data[key];
+                cntnt += "</p></div>";
+            }
+            
+            document.getElementById("id_item_meta")
+                .innerHTML=cntnt;
+        }
+                
+        function editAtrItem(data) {
+            let cntnt = "";
+            cntnt += "<div class=\"form-group\">";
+            cntnt += "<label class=\"control-label col-sm-4\">";
+            cntnt += "id";
+            cntnt += ":</label>";
+            cntnt += "<p class=\"form-control-static col-sm-8\"";
+            cntnt += " id=\"meta_id_item\"";
+            cntnt += " value = \"" + data["id"] + "\">";
+            cntnt += data["id"] + "</p></div>";
+            for(var key in data) {
+                if(key != "id") {
+                    cntnt += "<div class=\"form-group\">";
+                    cntnt += "<label class=\"col-sm-2 control-label\">";
+                    cntnt += key;
+                    cntnt += ":</label>";
+                    cntnt += "<div class=\"col-sm-10\">";
+                    cntnt += "<input class=\"form-control\"";
+                    cntnt += " id=\"meta_" + key + "_item\"";
+                    cntnt += " type=\"text\" value=\"";
+                    cntnt += data[key] + "\"></div></div>";
+                } else {
+                
+                }
+            }
+            
+            document.getElementById("id_item_meta")
+                .innerHTML=cntnt;
+        }
+        
+        function set_message_count(n) {
+            $('#message_count').text(n);
+            $('#message_count').css('visibility', n ? 'visible' : 'hidden');
+        }
+        function set_task_progress(task_id, progress) {
+            $('#' + task_id + '-progress').text(progress);
+        }
+        
+        
+        function constructNavButtonItem(id, class1, class2, class3, onclick1, onclick2, onclick3, text1, text2, text3) {
+            let cntnt = "";
+            if(onclick1 != "") {
+                cntnt += "<button type=\"button\" class=\"" + class1 + "\" onclick=\"" + onclick1 + "(" + id + ")\">" + text1 + "</button>";
+            }
+            
+            if(onclick2 != "") {
+            cntnt += "<button type=\"button\" class=\"" + class2 + "\" onclick=\"" + onclick2 + "(" + id + ")\">" + text2 + "</button>";
+            }
+            
+            if(onclick3 != "") {
+            cntnt += "<button type=\"button\" class=\"" + class3 + "\" onclick=\"" + onclick3 + "(" + id + ")\">" + text3 + "</button>";
+            }
+            
+            document.getElementById('nav_button_item').innerHTML = cntnt;
+        }
+        
+        function constructDefaultNavButtonItem(id) {
+            let class1, class2, class3, oclick1, oclick2, oclick3, text1, text2, text3;
+            class1 = "btn btn-default";
+            class2 = "btn btn-default";
+            class3 = "btn btn-danger";
+            onclick1 = "getMetaItem";
+            onclick2 = "editItem";
+            onclick3 = "removeItem";
+            text1 = "Обновить пропуск";
+            text2 = "Редактировать пропуск";
+            text3 = "Удалить пропуск";
+            constructNavButtonItem(id, class1, class2, class3, onclick1, onclick2, onclick3, text1, text2, text3);
+        }
+        
+        function constructEditNavButtonItem(id) {
+            let class1, class2, class3, oclick1, oclick2, oclick3, text1, text2, text3;
+            class1 = "btn btn-success";
+            class2 = "btn btn-warning";
+            class3 = "";
+            onclick1 = "saveChangeItem";
+            onclick2 = "abortChangeItem";
+            onclick3 = "";
+            text1 = "Сохранить изменения";
+            text2 = "Отменить изменения";
+            text3 = "";
+            constructNavButtonItem(id, class1, class2, class3, onclick1, onclick2, onclick3, text1, text2, text3);
+        }
+        
+        function constructDeleteNavButtonItem(id) {
+            let class1, class2, class3, oclick1, oclick2, oclick3, text1, text2, text3;
+            class1 = "btn btn-success";
+            class2 = "btn btn-warning";
+            class3 = "";
+            onclick1 = "abortRemoveItem";
+            onclick2 = "successRemoveItem";
+            onclick3 = "";
+            text1 = "Отменить удаление";
+            text2 = "Подтвердить удаление";
+            text3 = "";
+            constructNavButtonItem(id, class1, class2, class3, onclick1, onclick2, onclick3, text1, text2, text3);
+        }
+        {% if current_user.is_authenticated %}
+        {% endif %}
+    </script>
+{% endblock %}
