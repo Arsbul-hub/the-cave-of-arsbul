@@ -5,7 +5,26 @@
   <title>Блог</title>
 </head>
 <body>
-<a> Приветствую вас в своем блоге</a>
-<a href="/main">Переход на главную</a>
+<a> Приветствую вас в своем блоге </br> </a>
+
+
+<a href="/main">Переход на главную </br> </a>
+
+
+<a href="/comment">Добавить коммент </br> </a>
+
+
+<p>
+Комментарии: </br>
+</p>
+
+{% for i in range(len_list) %}
+
+  <p>
+    Имя: {{names[i]}}</br>   Коммент: {{comments[i]}}</br>
+  </p>
+
+{% endfor %}
+
 </body>
 </html>

@@ -2,10 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="758f4b2e-99bb-4769-a2cd-9c1ad60dceba" name="Default Changelist" comment="Обновление времени на сранице /examples при ее загрузке">
-      <change afterPath="$PROJECT_DIR$/app/comment/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/comment/routes.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/templates/comment.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/blog/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/blog/routes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/comment/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/comment/routes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/blog.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/blog.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/comment.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/comment.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,7 +35,9 @@
     </file-type-list>
   </component>
   <component name="ProjectId" id="1taHYAnBWveibOQVBYkUYf0VXBc" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -41,13 +46,14 @@
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/app/templates" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/app" />
     <property name="restartRequiresConfirmation" value="false" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\Arsbul Programming\Documents\the cave of arsbul\app\templates" />
       <recent name="C:\Users\Arsbul Programming\Documents\the cave of arsbul\app" />
+      <recent name="C:\Users\Arsbul Programming\Documents\the cave of arsbul\app\blog" />
+      <recent name="C:\Users\Arsbul Programming\Documents\the cave of arsbul\app\templates" />
       <recent name="D:\Users\Arsbul Programming\Documents\intellegent-system.online\app\templates" />
     </key>
   </component>
@@ -138,7 +144,14 @@
       <option name="project" value="LOCAL" />
       <updated>1627836919102</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Обновление времени на сранице /examples при ее загрузке">
+      <created>1628194851201</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1628194851201</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

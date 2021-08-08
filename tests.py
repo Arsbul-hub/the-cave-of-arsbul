@@ -41,7 +41,7 @@ class UserModelCase(unittest.TestCase):
         db.session.add(u1)
         db.session.add(u2)
         db.session.commit()
-        msg = Message(author=u1, recipient=u2, body="test")
+        msg = Message(author=u1, recipient=u2, body="comment")
         db.session.add(msg)
         u2.add_notification('unread_message_count', u2.new_messages())
         db.session.commit()

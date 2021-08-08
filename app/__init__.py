@@ -21,6 +21,8 @@ def create_app():
     from .example import bp as example_bp
     application.register_blueprint(example_bp)
 
+    from .comment import bp as comment_bp
+    application.register_blueprint(comment_bp)
     return application
 
 application = create_app()
