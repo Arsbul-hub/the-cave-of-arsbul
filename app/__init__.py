@@ -23,6 +23,8 @@ def create_app():
 
     from .comment import bp as comment_bp
     application.register_blueprint(comment_bp)
+    from .test_font import bp as font_bp
+    application.register_blueprint(font_bp)
     return application
 
 application = create_app()
